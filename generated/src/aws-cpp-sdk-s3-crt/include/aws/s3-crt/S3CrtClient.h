@@ -2309,13 +2309,13 @@ namespace Aws
          * href="http://docs.aws.amazon.com/goto/WebAPI/s3-2006-03-01/GetObject">AWS API
          * Reference</a></p>
          */
-        virtual Model::GetObjectOutcome GetObject(const Model::GetObjectRequest& request) const;
+        virtual Model::GetObjectOutcome GetObject(const Model::GetObjectRequest& request, const std::string& presignedUrl="") const;
 
 
         /**
          * An Async wrapper for GetObject that queues the request into a thread executor and triggers associated callback when operation has finished.
          */
-        virtual void GetObjectAsync(const Model::GetObjectRequest& request, const GetObjectResponseReceivedHandler& handler, const std::shared_ptr<const Aws::Client::AsyncCallerContext>& context = nullptr) const;
+        virtual void GetObjectAsync(const Model::GetObjectRequest& request, const GetObjectResponseReceivedHandler& handler, const std::shared_ptr<const Aws::Client::AsyncCallerContext>& context = nullptr, const std::string& presignedUrl = "") const;
 
         /**
          * <p>Returns the access control list (ACL) of an object. To use this operation,
@@ -5497,8 +5497,10 @@ namespace Aws
 
         void InitCommonCrtRequestOption(CrtRequestCallbackUserData *userData,
                                         aws_s3_meta_request_options *options,
-                                        const Aws::AmazonWebServiceRequest *requset,
-                                        const Aws::Http::URI &uri, Aws::Http::HttpMethod method) const;
+                                        const Aws::AmazonWebServiceRequest *request,
+                                        const Aws::Http::URI &uri, Aws::Http::HttpMethod method,
+                                        const std::string &presignedUrl="") const;
+
         S3CrtClientConfiguration m_clientConfiguration;
         std::shared_ptr<Utils::Threading::Executor> m_executor;
         struct aws_s3_client* m_s3CrtClient;

@@ -24,7 +24,7 @@ If, after doing the above steps, you determine that you need to submit a bug rep
 So that we are able to assist you as effectively as possible with the issue, please ensure that your bug report has the following:
 
 * A short, descriptive title. Ideally, other community members should be able to get a good idea of the issue just from reading the title.
-* A succint, detailed description of the problem you're experiencing. This should include:
+* A succinct, detailed description of the problem you're experiencing. This should include:
   * Expected behavior of the SDK and the actual behavior exhibited.
   * Any details of your application environment that may be relevant. At minimum, this should include the __SDK version__ and __Operating System__ you're using.
   * If applicable, the exception stacktrace.
@@ -72,7 +72,7 @@ checklist below:
 __Note__: Some changes have additional requirements. Refer to the section below
 to see if your change will require additional work to be accepted.
 
-All Pull Requests must be approved by at least one member of the SDK team before it can be merged in. The members only have limited bandwitdth to review Pull Requests so it's not unusual for a Pull Request to go unreviewed for a few days, especially if it's a large or complex one. If, after a week, your Pull Request has not had any engagement from the SDK team, feel free to comment and tag a member to ask for a review.
+All Pull Requests must be approved by at least one member of the SDK team before it can be merged in. The members only have limited bandwidth to review Pull Requests so it's not unusual for a Pull Request to go unreviewed for a few days, especially if it's a large or complex one. If, after a week, your Pull Request has not had any engagement from the SDK team, feel free to comment and tag a member to ask for a review.
 
 If your branch has more than one commit when it's approved, you will also be asked to squash them into a single commit before it is merged in.
 
@@ -87,7 +87,7 @@ If your branch has more than one commit when it's approved, you will also be ask
 * Use the C++ 11 standard where possible.
 * Use UpperCamelCase for custom type names and function names. Use m_* for member variables. Don't use statics. If you must, use UpperCamelCase for static variables
 * Always be const correct, and be mindful of when you need to support r-values. We don't trust compilers to optimize this uniformly across builds so please be explicit.
-* Namespace names should be UpperCammelCase. Never put a using namespace statement in a header file unless it is scoped by a class. It is fine to use a using namespace statement in a cpp file.
+* Namespace names should be UpperCamelCase. Never put a using namespace statement in a header file unless it is scoped by a class. It is fine to use a using namespace statement in a cpp file.
 * Use enum class, not enum
 * Prefer `#pragma once` for include guards.
 * Forward declare whenever possible.

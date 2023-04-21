@@ -446,10 +446,15 @@ void S3CrtClient::InitCommonCrtRequestOption(CrtRequestCallbackUserData *userDat
                                              aws_s3_meta_request_options *options,
                                              const Aws::AmazonWebServiceRequest *request,
                                              const Aws::Http::URI &uri,
-                                             Aws::Http::HttpMethod method) const
+                                             Aws::Http::HttpMethod method,
+                                             const std::string& presignedUrl) const
 {
   std::shared_ptr<HttpRequest> httpRequest(nullptr);
-  if (request)
+  if (!presignedUrl.empty())
+  {
+    httpRequest = CreateHttpRequest(presignedUrl, method, request->GetResponseStreamFactory());
+  }
+  else if (request)
   {
     httpRequest = CreateHttpRequest(uri, method, request->GetResponseStreamFactory());
     BuildHttpRequest(*request, httpRequest);
@@ -485,28 +490,27 @@ static void GetObjectRequestShutdownCallback(void *user_data)
   Aws::Delete(userData);
 }
 
-void S3CrtClient::GetObjectAsync(const GetObjectRequest& request, const GetObjectResponseReceivedHandler& handler, const std::shared_ptr<const Aws::Client::AsyncCallerContext>& handlerContext) const
+void S3CrtClient::GetObjectAsync(const GetObjectRequest& request, const GetObjectResponseReceivedHandler& handler, const std::shared_ptr<const Aws::Client::AsyncCallerContext>& handlerContext, const std::string& presignedUrl) const
 {
-  if (!m_endpointProvider) {
+  if (presignedUrl.empty() && !m_endpointProvider) {
     return handler(this, request, GetObjectOutcome(Aws::Client::AWSError<S3CrtErrors>(S3CrtErrors::INTERNAL_FAILURE, "INTERNAL_FAILURE", "Endpoint provider is not initialized", false)), handlerContext);
   }
-  if (!request.BucketHasBeenSet())
+  if (presignedUrl.empty() && !request.BucketHasBeenSet())
   {
     AWS_LOGSTREAM_ERROR("GetObject", "Required field: Bucket, is not set");
     return handler(this, request, GetObjectOutcome(Aws::Client::AWSError<S3CrtErrors>(S3CrtErrors::MISSING_PARAMETER, "MISSING_PARAMETER", "Missing required field [Bucket]", false)), handlerContext);
   }
-  if (!request.KeyHasBeenSet())
+  if (presignedUrl.empty() && !request.KeyHasBeenSet())
   {
     AWS_LOGSTREAM_ERROR("GetObject", "Required field: Key, is not set");
     return handler(this, request, GetObjectOutcome(Aws::Client::AWSError<S3CrtErrors>(S3CrtErrors::MISSING_PARAMETER, "MISSING_PARAMETER", "Missing required field [Key]", false)), handlerContext);
   }
   ResolveEndpointOutcome endpointResolutionOutcome = m_endpointProvider->ResolveEndpoint(request.GetEndpointContextParams());
-  if (!endpointResolutionOutcome.IsSuccess()) {
+  if (presignedUrl.empty() && !endpointResolutionOutcome.IsSuccess()) {
     handler(this, request, GetObjectOutcome(Aws::Client::AWSError<CoreErrors>(
         CoreErrors::ENDPOINT_RESOLUTION_FAILURE, "ENDPOINT_RESOLUTION_FAILURE", endpointResolutionOutcome.GetError().GetMessage(), false)), handlerContext);
     return;
   }
-  endpointResolutionOutcome.GetResult().AddPathSegments(request.GetKey());
 
   // make aws_s3_meta_request with callbacks
   CrtRequestCallbackUserData *userData = Aws::New<CrtRequestCallbackUserData>(ALLOCATION_TAG);
@@ -519,6 +523,14 @@ void S3CrtClient::GetObjectAsync(const GetObjectRequest& request, const GetObjec
 
   userData->getResponseHandler = handler;
   userData->asyncCallerContext = handlerContext;
+  if (!presignedUrl.empty()) {
+    options.presigned_url = presignedUrl.c_str();
+    InitCommonCrtRequestOption(userData, &options, &request, endpointResolutionOutcome.GetResult().GetURI(), Aws::Http::HttpMethod::HTTP_GET, presignedUrl);
+  }
+  else {
+    endpointResolutionOutcome.GetResult().AddPathSegments(request.GetKey());
+    InitCommonCrtRequestOption(userData, &options, &request, endpointResolutionOutcome.GetResult().GetURI(), Aws::Http::HttpMethod::HTTP_GET);
+  }
   InitCommonCrtRequestOption(userData, &options, &request, endpointResolutionOutcome.GetResult().GetURI(), Aws::Http::HttpMethod::HTTP_GET);
   if (userData != nullptr &&
     userData->request != nullptr &&
@@ -540,7 +552,7 @@ void S3CrtClient::GetObjectAsync(const GetObjectRequest& request, const GetObjec
     signing_config_override.service = Aws::Crt::ByteCursorFromCString(endpointResolutionOutcome.GetResult().GetAttributes()->authScheme.GetSigningName()->c_str());
   }
   options.signing_config = &signing_config_override;
-
+  // Need to print the message out to check the difference between presigned with not signed url.
   std::shared_ptr<Aws::Crt::Http::HttpRequest> crtHttpRequest = userData->request->ToCrtHttpRequest();
   options.message= crtHttpRequest->GetUnderlyingMessage();
   userData->crtHttpRequest = crtHttpRequest;
@@ -551,7 +563,7 @@ void S3CrtClient::GetObjectAsync(const GetObjectRequest& request, const GetObjec
   }
 }
 
-GetObjectOutcome S3CrtClient::GetObject(const GetObjectRequest& request) const
+GetObjectOutcome S3CrtClient::GetObject(const GetObjectRequest& request, const std::string& presignedUrl) const
 {
   Aws::Utils::Threading::Semaphore sem(0, 1);
   GetObjectOutcome res;
@@ -561,7 +573,7 @@ GetObjectOutcome S3CrtClient::GetObject(const GetObjectRequest& request) const
       sem.ReleaseAll();
   }};
 
-  S3CrtClient::GetObjectAsync(request, handler, nullptr);
+  S3CrtClient::GetObjectAsync(request, handler, nullptr, presignedUrl);
   sem.WaitOne();
   return res;
 }
