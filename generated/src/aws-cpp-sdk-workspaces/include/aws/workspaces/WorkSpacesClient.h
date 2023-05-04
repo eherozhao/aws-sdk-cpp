@@ -47,6 +47,9 @@ namespace WorkSpaces
       static const char* SERVICE_NAME;
       static const char* ALLOCATION_TAG;
 
+      typedef WorkSpacesClientConfiguration ClientConfigurationType;
+      typedef WorkSpacesEndpointProvider EndpointProviderType;
+
        /**
         * Initializes client to use DefaultCredentialProviderChain, with default http client factory, and optional client config. If client config
         * is not specified, it will be initialized to default values.
@@ -1251,10 +1254,10 @@ namespace WorkSpaces
         }
 
         /**
-         * <p>Imports the specified Windows 10 Bring Your Own License (BYOL) image into
-         * Amazon WorkSpaces. The image must be an already licensed Amazon EC2 image that
-         * is in your Amazon Web Services account, and you must own the image. For more
-         * information about creating BYOL images, see <a
+         * <p>Imports the specified Windows 10 or 11 Bring Your Own License (BYOL) image
+         * into Amazon WorkSpaces. The image must be an already licensed Amazon EC2 image
+         * that is in your Amazon Web Services account, and you must own the image. For
+         * more information about creating BYOL images, see <a
          * href="https://docs.aws.amazon.com/workspaces/latest/adminguide/byol-windows-images.html">
          * Bring Your Own Windows Desktop Licenses</a>.</p><p><h3>See Also:</h3>   <a
          * href="http://docs.aws.amazon.com/goto/WebAPI/workspaces-2015-04-08/ImportWorkspaceImage">AWS

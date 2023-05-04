@@ -44,6 +44,9 @@ namespace GuardDuty
       static const char* SERVICE_NAME;
       static const char* ALLOCATION_TAG;
 
+      typedef GuardDutyClientConfiguration ClientConfigurationType;
+      typedef GuardDutyEndpointProvider EndpointProviderType;
+
        /**
         * Initializes client to use DefaultCredentialProviderChain, with default http client factory, and optional client config. If client config
         * is not specified, it will be initialized to default values.
@@ -1470,6 +1473,34 @@ namespace GuardDuty
         void ListThreatIntelSetsAsync(const ListThreatIntelSetsRequestT& request, const ListThreatIntelSetsResponseReceivedHandler& handler, const std::shared_ptr<const Aws::Client::AsyncCallerContext>& context = nullptr) const
         {
             return SubmitAsync(&GuardDutyClient::ListThreatIntelSets, request, handler, context);
+        }
+
+        /**
+         * <p>Initiates the malware scan. Invoking this API will automatically create the
+         * <a
+         * href="https://docs.aws.amazon.com/guardduty/latest/ug/slr-permissions-malware-protection.html">Service-linked
+         * role </a> in the corresponding account.</p><p><h3>See Also:</h3>   <a
+         * href="http://docs.aws.amazon.com/goto/WebAPI/guardduty-2017-11-28/StartMalwareScan">AWS
+         * API Reference</a></p>
+         */
+        virtual Model::StartMalwareScanOutcome StartMalwareScan(const Model::StartMalwareScanRequest& request) const;
+
+        /**
+         * A Callable wrapper for StartMalwareScan that returns a future to the operation so that it can be executed in parallel to other requests.
+         */
+        template<typename StartMalwareScanRequestT = Model::StartMalwareScanRequest>
+        Model::StartMalwareScanOutcomeCallable StartMalwareScanCallable(const StartMalwareScanRequestT& request) const
+        {
+            return SubmitCallable(&GuardDutyClient::StartMalwareScan, request);
+        }
+
+        /**
+         * An Async wrapper for StartMalwareScan that queues the request into a thread executor and triggers associated callback when operation has finished.
+         */
+        template<typename StartMalwareScanRequestT = Model::StartMalwareScanRequest>
+        void StartMalwareScanAsync(const StartMalwareScanRequestT& request, const StartMalwareScanResponseReceivedHandler& handler, const std::shared_ptr<const Aws::Client::AsyncCallerContext>& context = nullptr) const
+        {
+            return SubmitAsync(&GuardDutyClient::StartMalwareScan, request, handler, context);
         }
 
         /**
