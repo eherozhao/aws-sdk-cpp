@@ -475,7 +475,11 @@ void S3CrtClient::InitCommonCrtRequestOption(CrtRequestCallbackUserData *userDat
   options->headers_callback = S3CrtRequestHeadersCallback;
   options->body_callback = S3CrtRequestGetBodyCallback;
   options->finish_callback = S3CrtRequestFinishCallback;
-  const auto endpointStr = uri.GetURIString();
+  auto endpointStr = uri.GetURIString();
+  if (!presignedUrl.empty())
+  {
+    endpointStr = presignedUrl;
+  }
   const auto endpointCursor{ aws_byte_cursor_from_array(endpointStr.c_str(), endpointStr.size()) };
   aws_uri_init_parse(options->endpoint, Aws::get_aws_allocator(), &endpointCursor);
 }
@@ -531,7 +535,6 @@ void S3CrtClient::GetObjectAsync(const GetObjectRequest& request, const GetObjec
     endpointResolutionOutcome.GetResult().AddPathSegments(request.GetKey());
     InitCommonCrtRequestOption(userData, &options, &request, endpointResolutionOutcome.GetResult().GetURI(), Aws::Http::HttpMethod::HTTP_GET);
   }
-  InitCommonCrtRequestOption(userData, &options, &request, endpointResolutionOutcome.GetResult().GetURI(), Aws::Http::HttpMethod::HTTP_GET);
   if (userData != nullptr &&
     userData->request != nullptr &&
     userData->request->GetContentBody() != nullptr &&
@@ -541,18 +544,20 @@ void S3CrtClient::GetObjectAsync(const GetObjectRequest& request, const GetObjec
   }
   options.shutdown_callback = GetObjectRequestShutdownCallback;
   options.type = AWS_S3_META_REQUEST_TYPE_GET_OBJECT;
-  struct aws_signing_config_aws signing_config_override = m_s3CrtSigningConfig;
-  if (endpointResolutionOutcome.GetResult().GetAttributes() && endpointResolutionOutcome.GetResult().GetAttributes()->authScheme.GetSigningRegion()) {
-    signing_config_override.region = Aws::Crt::ByteCursorFromCString(endpointResolutionOutcome.GetResult().GetAttributes()->authScheme.GetSigningRegion()->c_str());
+  if (presignedUrl.empty())
+  {
+      struct aws_signing_config_aws signing_config_override = m_s3CrtSigningConfig;
+      if (endpointResolutionOutcome.GetResult().GetAttributes() && endpointResolutionOutcome.GetResult().GetAttributes()->authScheme.GetSigningRegion()) {
+          signing_config_override.region = Aws::Crt::ByteCursorFromCString(endpointResolutionOutcome.GetResult().GetAttributes()->authScheme.GetSigningRegion()->c_str());
+      }
+      if (endpointResolutionOutcome.GetResult().GetAttributes() && endpointResolutionOutcome.GetResult().GetAttributes()->authScheme.GetSigningRegionSet()) {
+          signing_config_override.region = Aws::Crt::ByteCursorFromCString(endpointResolutionOutcome.GetResult().GetAttributes()->authScheme.GetSigningRegionSet()->c_str());
+      }
+      if (endpointResolutionOutcome.GetResult().GetAttributes() && endpointResolutionOutcome.GetResult().GetAttributes()->authScheme.GetSigningName()) {
+          signing_config_override.service = Aws::Crt::ByteCursorFromCString(endpointResolutionOutcome.GetResult().GetAttributes()->authScheme.GetSigningName()->c_str());
+      }
+      options.signing_config = &signing_config_override;
   }
-  if (endpointResolutionOutcome.GetResult().GetAttributes() && endpointResolutionOutcome.GetResult().GetAttributes()->authScheme.GetSigningRegionSet()) {
-    signing_config_override.region = Aws::Crt::ByteCursorFromCString(endpointResolutionOutcome.GetResult().GetAttributes()->authScheme.GetSigningRegionSet()->c_str());
-  }
-  if (endpointResolutionOutcome.GetResult().GetAttributes() && endpointResolutionOutcome.GetResult().GetAttributes()->authScheme.GetSigningName()) {
-    signing_config_override.service = Aws::Crt::ByteCursorFromCString(endpointResolutionOutcome.GetResult().GetAttributes()->authScheme.GetSigningName()->c_str());
-  }
-  options.signing_config = &signing_config_override;
-  // Need to print the message out to check the difference between presigned with not signed url.
   std::shared_ptr<Aws::Crt::Http::HttpRequest> crtHttpRequest = userData->request->ToCrtHttpRequest();
   options.message= crtHttpRequest->GetUnderlyingMessage();
   userData->crtHttpRequest = crtHttpRequest;

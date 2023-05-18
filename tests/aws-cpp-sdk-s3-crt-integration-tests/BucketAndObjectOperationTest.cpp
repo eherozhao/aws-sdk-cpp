@@ -529,6 +529,29 @@ namespace
         AWS_ASSERT_SUCCESS(putObjectOutcome);
     }
 
+    TEST_F(BucketAndObjectOperationTest, TestPresignedURLWithRequest)
+    {
+        Aws::String fullBucketName = "presigned-url-request";
+
+        TagTestBucket(fullBucketName, Client);
+
+        PutObjectRequest putObjectRequest;
+        putObjectRequest.SetBucket(fullBucketName);
+
+        std::shared_ptr<Aws::IOStream> objectStream = Aws::MakeShared<Aws::StringStream>("BucketAndObjectOperationTest");
+        *objectStream << "Test Object";
+        putObjectRequest.SetBody(objectStream);
+        putObjectRequest.SetContentType("text/plain");
+        putObjectRequest.SetKey(TEST_OBJ_KEY);
+        PutObjectOutcome putObjectOutcome = Client->PutObject(putObjectRequest);
+        AWS_ASSERT_SUCCESS(putObjectOutcome);
+        GetObjectRequest getObjectRequest;
+
+        Aws::String presignedUrlGet = Client->GeneratePresignedUrl(fullBucketName, TEST_OBJ_KEY, HttpMethod::HTTP_GET);
+        GetObjectOutcome getObjectOutcome = Client->GetObject(getObjectRequest, presignedUrlGet);
+        AWS_ASSERT_SUCCESS(getObjectOutcome);
+    }
+
     TEST_F(BucketAndObjectOperationTest, TestObjectOperations)
     {
         Aws::String fullBucketName = CalculateBucketName(BASE_OBJECTS_BUCKET_NAME.c_str());
