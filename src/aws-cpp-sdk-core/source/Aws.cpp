@@ -9,9 +9,11 @@
 #include <aws/core/utils/logging/AWSLogging.h>
 #include <aws/core/utils/logging/CRTLogging.h>
 #include <aws/core/utils/logging/DefaultLogSystem.h>
+#include <aws/core/utils/logging/DefaultCRTLogSystem.h>
 #include <aws/core/Globals.h>
 #include <aws/core/external/cjson/cJSON.h>
 #include <aws/core/monitoring/MonitoringManager.h>
+#include <aws/core/utils/component-registry/ComponentRegistry.h>
 #include <aws/core/net/Net.h>
 #include <aws/core/config/AWSProfileConfigLoader.h>
 #include <aws/core/internal/AWSHttpResourceClient.h>
@@ -150,10 +152,13 @@ namespace Aws
         Aws::Net::InitNetwork();
         Aws::Internal::InitEC2MetadataClient();
         Aws::Monitoring::InitMonitoring(options.monitoringOptions.customizedMonitoringFactory_create_fn);
+        Aws::Utils::ComponentRegistry::InitComponentRegistry();
     }
 
     void ShutdownAPI(const SDKOptions& options)
     {
+        Aws::Utils::ComponentRegistry::TerminateAllComponents();
+        Aws::Utils::ComponentRegistry::ShutdownComponentRegistry();
         Aws::Monitoring::CleanupMonitoring();
         Aws::Internal::CleanupEC2MetadataClient();
         Aws::Net::CleanupNetwork();
